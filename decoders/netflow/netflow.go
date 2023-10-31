@@ -185,7 +185,7 @@ func DecodeDataRecordFields(payload *bytes.Buffer, listFields []Field, record *[
 		// method's documentation as it may be invalidated by future Read call.
 		value := payload.Next(l)
 		if len(value) < l {
-			return fmt.Errorf("decode dataset: there are fewer than %d bytes in the buffer", l)
+			return fmt.Errorf("decode dataset: there are fewer than %d bytes in the buffer, actual length: %d", l, len(value))
 		}
 
 		(*record)[i].Type = templateField.Type
@@ -318,7 +318,7 @@ func DecodeDataSet(payload *bytes.Buffer, listFields []Field, flowSet *DataFlowS
 	flowSet.Records = flowSet.Records[:cap(flowSet.Records)]
 
 	i := 0
-	for payload.Len() > 0 {
+	for payload.Len() > 4 { // to ignore padding
 		if i >= len(flowSet.Records) {
 			flowSet.Records = append(flowSet.Records, DataRecord{})
 		}

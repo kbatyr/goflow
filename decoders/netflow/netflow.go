@@ -165,9 +165,10 @@ func GetTemplateSize(template []Field) int {
 
 // DecodeDataRecordFields decodes the fields(type and value) of DataRecord.
 func DecodeDataRecordFields(payload *bytes.Buffer, listFields []Field, record *[]DataField) error {
-	*record = (*record)[:cap(*record)]
-	if len(*record) < len(listFields) {
-		*record = append(*record, make([]DataField, len(listFields)-len(*record))...)
+	if d := len(listFields) - cap(*record); d > 0 {
+		*record = append((*record)[:cap(*record)], make([]DataField, d)...)
+	} else {
+		*record = (*record)[:len(listFields)]
 	}
 
 	var ok bool
@@ -181,17 +182,19 @@ func DecodeDataRecordFields(payload *bytes.Buffer, listFields []Field, record *[
 			}
 		}
 
-		// XXX: Retaining a slice returned by Next() may be unsafe according to
-		// method's documentation as it may be invalidated by future Read call.
-		value := payload.Next(l)
-		if len(value) < l {
-			return fmt.Errorf("decode dataset: there are fewer than %d bytes in the buffer, actual length: %d", l, len(value))
+		if cap((*record)[i].Value) < l {
+			(*record)[i].Value = append((*record)[i].Value[:0], make([]byte, l)...)
+		} else {
+			(*record)[i].Value = (*record)[i].Value[:l]
+		}
+
+		// Read the value from the payload
+		if n, _ := payload.Read((*record)[i].Value); n < l {
+			return fmt.Errorf("DecodeDataRecordFields: %v", io.ErrUnexpectedEOF)
 		}
 
 		(*record)[i].Type = templateField.Type
-		(*record)[i].Value = value
 	}
-	*record = (*record)[:len(listFields)]
 	return nil
 }
 

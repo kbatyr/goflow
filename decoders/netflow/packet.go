@@ -188,6 +188,7 @@ func (f *Field) ReadFrom(b *bytes.Buffer) bool {
 		if ok := utils.ReadUint32FromBuffer(b, &f.EnterpriseNumber); !ok {
 			return false
 		}
+		f.Type = f.Type & 0x7fff // clear enterprise bit
 	}
 
 	return true

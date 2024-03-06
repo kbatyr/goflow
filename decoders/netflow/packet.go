@@ -175,7 +175,7 @@ func (t *TemplateRecord) ReadFrom(b *bytes.Buffer) bool {
 // boolean flag telling if it was a success.
 //
 // Value is treated as big endian.
-func (f *Field) ReadFrom(b *bytes.Buffer) bool {
+func (f *Field) ReadFrom(b *bytes.Buffer, ver int) bool {
 	if ok := utils.ReadUint16FromBuffer(b, &f.Type); !ok {
 		return false
 	}
@@ -184,7 +184,7 @@ func (f *Field) ReadFrom(b *bytes.Buffer) bool {
 		return false
 	}
 
-	if f.ContainsEnterpriseNumber() {
+	if f.ContainsEnterpriseNumber() && ver == ipfix {
 		if ok := utils.ReadUint32FromBuffer(b, &f.EnterpriseNumber); !ok {
 			return false
 		}

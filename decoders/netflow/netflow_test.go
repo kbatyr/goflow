@@ -158,12 +158,12 @@ func TestDecodeTemplateSet(t *testing.T) {
 
 	// packet without template flowset
 	pkt0 := bytes.NewBuffer(netflowTestPackets[0].Data[42:])
-	err := DecodeTemplateSet(pkt0, &fs)
+	err := DecodeTemplateSet(pkt0, &fs, netflow)
 	assert.Error(t, err)
 
 	// template flowSet packet
 	pkt1 := bytes.NewBuffer(netflowTestPackets[1].Data[66:206])
-	err = DecodeTemplateSet(pkt1, &fs)
+	err = DecodeTemplateSet(pkt1, &fs, netflow)
 	assert.NoError(t, err)
 	assert.Equal(t, 4, len(fs.Records))
 
@@ -184,7 +184,7 @@ func TestDecodeTemplateSet(t *testing.T) {
 	copy(pkt2, netflowTestPackets[1].Data[66:206])
 	pkt2[3] = 0
 
-	err = DecodeTemplateSet(bytes.NewBuffer(pkt2), &fs)
+	err = DecodeTemplateSet(bytes.NewBuffer(pkt2), &fs, netflow)
 	assert.Error(t, err)
 	assert.Equal(t, &ErrorDecodingNetFlow{msg: "error decoding TemplateSet: zero count."}, err)
 }

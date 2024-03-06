@@ -131,11 +131,7 @@ func (f *Field) IsVariableLength() bool {
 // ContainsEnterpriseNumber reports whether the Field is an enterprise-specific
 // Information Element (RFC 7011 sec. 3.2. Field Specifier Format).
 func (f *Field) ContainsEnterpriseNumber(ver int) bool {
-	if ver == nfv9 {
-		return false
-	}
-
-	return f.Type&0x8000 != 0
+	return (ver == nfv10) && (f.Type&0x8000 != 0)
 }
 
 // DataField contains the type and record value itself.

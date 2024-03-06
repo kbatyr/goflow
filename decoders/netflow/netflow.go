@@ -45,7 +45,7 @@ func DecodeNFv9OptionsTemplateSet(payload *bytes.Buffer, ts *NFv9OptionsTemplate
 		}
 
 		for j := 0; j < sizeScope; j++ {
-			if !record.Scopes[j].ReadFrom(payload) {
+			if !record.Scopes[j].ReadFrom(payload, nfv9) {
 				return fmt.Errorf("decode nfv9 options templateSet: %v", io.ErrUnexpectedEOF)
 			}
 		}
@@ -57,7 +57,7 @@ func DecodeNFv9OptionsTemplateSet(payload *bytes.Buffer, ts *NFv9OptionsTemplate
 		}
 
 		for k := 0; k < sizeOptions; k++ {
-			if !record.Options[k].ReadFrom(payload) {
+			if !record.Options[k].ReadFrom(payload, nfv9) {
 				return fmt.Errorf("decode nfv9 options templateSet: %v", io.ErrUnexpectedEOF)
 			}
 		}
@@ -90,7 +90,7 @@ func DecodeIPFIXOptionsTemplateSet(payload *bytes.Buffer, ts *IPFIXOptionsTempla
 		}
 
 		for j := 0; j < int(optsTemplateRecord.ScopeFieldCount); j++ {
-			if !optsTemplateRecord.Scopes[j].ReadFrom(payload) {
+			if !optsTemplateRecord.Scopes[j].ReadFrom(payload, nfv10) {
 				return fmt.Errorf("decode ipfix options templateSet: %v", io.ErrUnexpectedEOF)
 			}
 		}
@@ -106,7 +106,7 @@ func DecodeIPFIXOptionsTemplateSet(payload *bytes.Buffer, ts *IPFIXOptionsTempla
 		}
 
 		for k := 0; k < optionsSize; k++ {
-			if !optsTemplateRecord.Options[k].ReadFrom(payload) {
+			if !optsTemplateRecord.Options[k].ReadFrom(payload, nfv10) {
 				return fmt.Errorf("decode ipfix options templateSet: %v", io.ErrUnexpectedEOF)
 			}
 		}
@@ -119,7 +119,7 @@ func DecodeIPFIXOptionsTemplateSet(payload *bytes.Buffer, ts *IPFIXOptionsTempla
 }
 
 // DecodeTemplateSet decodes the template data that describe structure of Data Records (actual netflow/ipfix data).
-func DecodeTemplateSet(payload *bytes.Buffer, ts *TemplateFlowSet) error {
+func DecodeTemplateSet(payload *bytes.Buffer, ts *TemplateFlowSet, ver int) error {
 	ts.Records = ts.Records[:cap(ts.Records)]
 
 	i := 0
@@ -144,7 +144,7 @@ func DecodeTemplateSet(payload *bytes.Buffer, ts *TemplateFlowSet) error {
 		}
 
 		for j := 0; j < int(record.FieldCount); j++ {
-			if !record.Fields[j].ReadFrom(payload) {
+			if !record.Fields[j].ReadFrom(payload, ver) {
 				return fmt.Errorf("decode TemplateSet: %v", io.ErrUnexpectedEOF)
 			}
 		}
@@ -422,7 +422,7 @@ func (f *FlowMessage) Decode(payload *bytes.Buffer, templates NetFlowTemplateSys
 		return io.ErrUnexpectedEOF
 	}
 
-	if f.Version == netflow {
+	if f.Version == nfv9 {
 		if !f.PacketNFv9.ReadFrom(payload) {
 			return fmt.Errorf("decode packet version: %v", io.ErrUnexpectedEOF)
 		}
@@ -431,7 +431,7 @@ func (f *FlowMessage) Decode(payload *bytes.Buffer, templates NetFlowTemplateSys
 		if err := f.DecodeNFv9Packet(payload, templates); err != nil {
 			return err
 		}
-	} else if f.Version == ipfix {
+	} else if f.Version == nfv10 {
 		if !f.PacketIPFIX.ReadFrom(payload) {
 			return fmt.Errorf("decode packet header: %v", io.ErrUnexpectedEOF)
 		}
@@ -470,7 +470,7 @@ func (f *FlowMessage) DecodeNFv9Packet(payload *bytes.Buffer, templates NetFlowT
 			}
 
 			ts := &f.PacketNFv9.TemplateFS[nfTemplateFSidx]
-			if err := DecodeTemplateSet(f.buf, ts); err != nil {
+			if err := DecodeTemplateSet(f.buf, ts, nfv9); err != nil {
 				return fmt.Errorf("decode netflow packet: %v", err)
 			}
 
@@ -586,7 +586,7 @@ func (f *FlowMessage) DecodeIPFIXPacket(payload *bytes.Buffer, templates NetFlow
 			}
 
 			ts := &f.PacketIPFIX.TemplateFS[ipxTemplateFSidx]
-			if err := DecodeTemplateSet(f.buf, ts); err != nil {
+			if err := DecodeTemplateSet(f.buf, ts, nfv10); err != nil {
 				return err
 			}
 

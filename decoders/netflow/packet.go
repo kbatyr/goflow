@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	netflow                       = 9
-	ipfix                         = 10
+	nfv9                          = 9
+	nfv10                         = 10
 	nfv9TemplateFlowSetID         = 0
 	nfv9OptionsTemplateFlowSetID  = 1
 	ipfixTemplateFlowSetID        = 2
@@ -130,8 +130,8 @@ func (f *Field) IsVariableLength() bool {
 
 // ContainsEnterpriseNumber reports whether the Field is an enterprise-specific
 // Information Element (RFC 7011 sec. 3.2. Field Specifier Format).
-func (f *Field) ContainsEnterpriseNumber() bool {
-	return f.Type&0x8000 != 0
+func (f *Field) ContainsEnterpriseNumber(ver int) bool {
+	return (ver == nfv10) && (f.Type&0x8000 != 0)
 }
 
 // DataField contains the type and record value itself.
@@ -175,7 +175,7 @@ func (t *TemplateRecord) ReadFrom(b *bytes.Buffer) bool {
 // boolean flag telling if it was a success.
 //
 // Value is treated as big endian.
-func (f *Field) ReadFrom(b *bytes.Buffer) bool {
+func (f *Field) ReadFrom(b *bytes.Buffer, ver int) bool {
 	if ok := utils.ReadUint16FromBuffer(b, &f.Type); !ok {
 		return false
 	}
@@ -184,7 +184,7 @@ func (f *Field) ReadFrom(b *bytes.Buffer) bool {
 		return false
 	}
 
-	if f.ContainsEnterpriseNumber() {
+	if f.ContainsEnterpriseNumber(ver) {
 		if ok := utils.ReadUint32FromBuffer(b, &f.EnterpriseNumber); !ok {
 			return false
 		}

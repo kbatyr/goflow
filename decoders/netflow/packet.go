@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	netflow                       = 9
-	ipfix                         = 10
+	nfv9                          = 9
+	nfv10                         = 10
 	nfv9TemplateFlowSetID         = 0
 	nfv9OptionsTemplateFlowSetID  = 1
 	ipfixTemplateFlowSetID        = 2
@@ -130,7 +130,11 @@ func (f *Field) IsVariableLength() bool {
 
 // ContainsEnterpriseNumber reports whether the Field is an enterprise-specific
 // Information Element (RFC 7011 sec. 3.2. Field Specifier Format).
-func (f *Field) ContainsEnterpriseNumber() bool {
+func (f *Field) ContainsEnterpriseNumber(ver int) bool {
+	if ver == nfv9 {
+		return false
+	}
+
 	return f.Type&0x8000 != 0
 }
 
@@ -184,7 +188,7 @@ func (f *Field) ReadFrom(b *bytes.Buffer, ver int) bool {
 		return false
 	}
 
-	if f.ContainsEnterpriseNumber() && ver == ipfix {
+	if f.ContainsEnterpriseNumber(ver) {
 		if ok := utils.ReadUint32FromBuffer(b, &f.EnterpriseNumber); !ok {
 			return false
 		}

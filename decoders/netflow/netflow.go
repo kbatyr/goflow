@@ -355,15 +355,26 @@ func (ts *BasicTemplateSystem) AddTemplate(version uint16, obsDomainId uint32, t
 		ts.templates[version][obsDomainId] = make(map[uint16]interface{})
 	}
 	var templateId uint16
-	switch templateIdConv := template.(type) {
+	switch record := template.(type) {
 	case IPFIXOptionsTemplateRecord:
-		templateId = templateIdConv.TemplateId
+		templateId = record.TemplateId
+		ts.templates[version][obsDomainId][templateId] = template
 	case NFv9OptionsTemplateRecord:
-		templateId = templateIdConv.TemplateId
+		templateId = record.TemplateId
+		ts.templates[version][obsDomainId][templateId] = template
 	case TemplateRecord:
-		templateId = templateIdConv.TemplateId
+		templateId = record.TemplateId
+		if _, exists := ts.templates[version][obsDomainId][templateId]; !exists {
+			newRec := TemplateRecord{
+				FieldCount: record.FieldCount,
+				TemplateId: templateId,
+				Fields:     make([]Field, len(record.Fields)),
+			}
+			copy(newRec.Fields, record.Fields)
+
+			ts.templates[version][obsDomainId][templateId] = newRec
+		}
 	}
-	ts.templates[version][obsDomainId][templateId] = template
 	ts.templateslock.Unlock()
 }
 

@@ -364,16 +364,14 @@ func (ts *BasicTemplateSystem) AddTemplate(version uint16, obsDomainId uint32, t
 		ts.templates[version][obsDomainId][templateId] = template
 	case TemplateRecord:
 		templateId = record.TemplateId
-		if _, exists := ts.templates[version][obsDomainId][templateId]; !exists {
-			newRec := TemplateRecord{
-				FieldCount: record.FieldCount,
-				TemplateId: templateId,
-				Fields:     make([]Field, len(record.Fields)),
-			}
-			copy(newRec.Fields, record.Fields)
-
-			ts.templates[version][obsDomainId][templateId] = newRec
+		newRec := TemplateRecord{
+			FieldCount: record.FieldCount,
+			TemplateId: templateId,
+			Fields:     make([]Field, len(record.Fields)),
 		}
+		copy(newRec.Fields, record.Fields)
+
+		ts.templates[version][obsDomainId][templateId] = newRec
 	}
 	ts.templateslock.Unlock()
 }
